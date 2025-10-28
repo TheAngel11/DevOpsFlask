@@ -1,0 +1,1 @@
+Flask project automating a CI/CD pipeline and using a local Kubernetes cluster with minikube to deploy it.
