@@ -25,7 +25,11 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running unit tests...'
-                sh "python -m unittest discover app/tests"
+                script {
+                    docker.image("${IMAGE_NAME}:${IMAGE_TAG}").inside {
+                        sh 'python -m unittest discover src/tests'
+                    }
+                }
             }
         }
 
