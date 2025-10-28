@@ -1,25 +1,54 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "theangel11/flask-devops"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+
     stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
-                echo 'Building...'
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "app")
+                }
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Testing...'
+                echo 'Running unit tests...'
+                sh "python -m unittest discover app/tests"
+            }
+        }
+
+        stage('Package') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-creds', url: '']) {
+                    script {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying...'
+                script {
+                    sh """
+                    kubectl set image deployment/flask-deployment flask=${IMAGE_NAME}:${IMAGE_TAG} --record
+                    kubectl rollout status deployment/flask-deployment
+                    """
+                }
             }
         }
-
     }
 
 
